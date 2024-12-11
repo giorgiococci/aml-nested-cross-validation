@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+description: Sample pipeline
+identity: 
+  type: user_identity
+jobs:
+  inner_task:
+    name: sample_pipeline
+    display_name: Sample pipeline
+    compute: azureml:cpu-cluster
+    code: .
+    command: >-
+      python sweep-task.py
+    environment: azureml://registries/azureml/environments/sklearn-1.5/versions/16

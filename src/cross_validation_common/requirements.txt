@@ -1,0 +1,4 @@
+pandas
+azure-ai-ml
+azure-identity
+azureml-fsspec

@@ -1,0 +1,98 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+inputs:
+  dataset_input:
+    type: uri_file
+    path: azureml:iris-dataset@latest
+  sweep_pipeline_path:
+    type: uri_folder
+    path: ./src/sweep-pipeline/
+
+outputs:
+  folds_folder:
+    type: uri_folder
+
+settings:
+  default_compute: azureml:cpu-cluster
+
+jobs:
+
+  create_folds:
+    name: create_folds
+    display_name: Create Folds
+    code: ./src/create-folds/
+    command: >-
+      python create-folds.py
+      --dataset_path ${{inputs.dataset_input}}
+      --output_path ${{outputs.folds_folder}}
+      --n_splits 5
+      --random_state 42
+    environment: azureml://registries/azureml/environments/sklearn-1.5/versions/16
+    inputs:
+      dataset_input: ${{parent.inputs.dataset_input}}
+    outputs:
+      folds_folder: ${{parent.outputs.folds_folder}}
+
+
+  parallel_run:
+    type: parallel
+    compute: azureml:cpu-cluster
+    inputs:
+      dataset_input: ${{parent.inputs.dataset_input}}
+      folds_input: ${{parent.jobs.create_folds.outputs.folds_folder}}
+      sweep_pipeline_path: ${{parent.inputs.sweep_pipeline_path}}
+    outputs:
+      parallel_output: 
+        type: uri_folder
+        mode: rw_mount
+    resources:
+      instance_count: 2
+    input_data: ${{inputs.folds_input}}
+    max_concurrency_per_instance: 2
+    retry_settings:
+      max_retries: 2
+      timeout: 60
+    mini_batch_size: "1"
+    task:
+      type: run_function
+      code: ./src/outer-loop-tasks/  # Directory with your scripts
+      entry_script: outer-loop-task.py  # Script to execute for each fold
+      environment: azureml:outer-loop-task-env@latest
+      program_arguments: >- 
+       --dataset_input ${{inputs.dataset_input}}
+       --sweep_pipeline_path ${{inputs.sweep_pipeline_path}}
+
+
+  #   # Nested Sweep Job for Hyperparameter Tuning
+  #   jobs:
+  #     sweep_job:
+  #       type: sweep
+  #       sampling_algorithm: random  # Options: random, grid, bayesian
+  #       objective:
+  #         primary_metric: accuracy  # Metric to optimize
+  #         goal: maximize
+  #       search_space:
+  #         n_estimators:
+  #           type: choice
+  #           values: [50, 100, 150]
+  #         max_depth:
+  #           type: choice
+  #           values: [10, 20, None]
+  #       trial:
+  #         type: command
+  #         command: >
+  #           python sweep_task.py
+  #           --data_path ${{parent.inputs.dataset_path}}
+  #           --fold_index ${{parent.inputs.fold_index}}
+  #           --n_estimators ${{search_space.n_estimators}}
+  #           --max_depth ${{search_space.max_depth}}
+  #         environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38
+  #         inputs:
+  #           dataset_path: ${{parent.inputs.dataset_input}}
+  #           fold_index: ${{parent.inputs.fold_index}}
+  #         resources:
+  #           instance_count: 1
+  #       limits:
+  #         max_total_trials: 20
+  #         max_concurrent_trials: 5

@@ -1,0 +1,27 @@
+Metadata-Version: 2.1
+Name: cross_validation_common
+Version: 0.1.1
+Summary: A library for common cross-validation utilities.
+Home-page: https://github.com/yourusername/cross-validation-common
+Author: Giorgio Cocci
+Author-email: your.email@example.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pandas
+Requires-Dist: azure-ai-ml
+Requires-Dist: azure-identity
+Requires-Dist: azureml-fsspec
+
+# Cross-Validation Common
+
+A library for common cross-validation utilities.
+
+## Library creation script
+
+```sh
+cd src/cross-validation-common
+python setup.py sdist bdist_wheel
+```
