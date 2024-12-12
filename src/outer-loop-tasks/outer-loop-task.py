@@ -155,17 +155,26 @@ def run(input_data):
             print(f"Copying {file} to current directory")
             shutil.copyfile(os.path.join(sweep_pipeline_path, file), file)
             
-        # Get current MLFlow run ID
-        current_run_id = mlflow.active_run().info.run_id
+        # Get current run ID
+        # current_run_id = mlflow.active_run().info.run_id
+        from azureml.core import Run
+        run = Run.get_context()
+        current_run_id = run.id
         
         pipeline_job = load_job(source="sweep-pipeline.yml")
         submitted_job = ml_client.jobs.create_or_update(
             job=pipeline_job, 
-            experiment_name="hyperparameter-tuning"
+            experiment_name="hyperparameter-tuning",
+            tags={"parent_run_id": current_run_id}
             )
+        
+        # Get submitted job id
+        submitted_job_id = submitted_job.id
+        
+        # Add the submitted job id to the current run
+        run.set_tags({"sweep_pipeline_job_id": submitted_job_id})
 
     return []
-    
     
 
 # def main():
