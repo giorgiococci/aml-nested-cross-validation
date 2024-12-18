@@ -16,10 +16,9 @@ def train_model(params, X_train, X_test, y_train, y_test):
     return model
 
 def main(args):
-    parser = argparse.ArgumentParser()
     
-    args = parser.parse_args()
-
+    print(args)
+    
     mlflow.autolog()
     
     # setup parameters
@@ -42,6 +41,7 @@ def main(args):
     }
     
     datasets_path = args.datasets_path
+    test_data = args.test_data
     
     # In the datasets_path there are two files: "*_train.csv" and "*_test.csv"
     # Get training and testing files
@@ -72,11 +72,13 @@ def main(args):
     # copy subdirectory example
     from_directory = "model"
     to_directory = args.model_output
+    
+    print(f"Copying model from {from_directory} to {to_directory}")
 
-    copy_tree(from_directory, to_directory)
+    #copy_tree(from_directory, to_directory)
 
-    X_test.to_csv(Path(args.test_data) / "X_test.csv", index=False)
-    y_test.to_csv(Path(args.test_data) / "y_test.csv", index=False)
+    X_test.to_csv(Path(test_data) / "X_test.csv", index=False)
+    y_test.to_csv(Path(test_data) / "y_test.csv", index=False)
     
 
 def parse_args():
@@ -84,7 +86,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # add arguments
-    parser.add_argument("--datasets_path", type=str, required=True, help="Path to the dataset CSV files")
+    parser.add_argument("--datasets_path", type=str, help="Path to the dataset CSV files")
     parser.add_argument("--C", type=float, default=1.0)
     parser.add_argument("--kernel", type=str, default="rbf")
     parser.add_argument("--degree", type=int, default=3)

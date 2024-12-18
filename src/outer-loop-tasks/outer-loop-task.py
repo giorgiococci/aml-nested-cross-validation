@@ -115,48 +115,42 @@ def run(input_data):
         print(f"Dataset path: {dataset_path}")
 
         dataset = pd.read_csv(dataset_path)
-        train_dataset = []
-        test_dataset = []
         
-        for train_idx, test_idx in zip(train_indices, test_indices):
-            train_data = dataset.iloc[train_idx]
-            test_data = dataset.iloc[test_idx]
-
-            train_dataset.append(train_data)
-            test_dataset.append(test_data)
+        print(f"Dataset shape: {dataset.shape}")
+        print(f"Dataset columns: {dataset.columns}")
+        print(f"Dataset head: {dataset.head()}")
+        
+        # Get train and test datasets from the fold indices
+        train_dataset = dataset.iloc[train_indices]
+        test_dataset = dataset.iloc[test_indices]
+            
+        print(f"Train Dataset shape: {train_dataset.shape}")
+        print(f"Train Dataset columns: {train_dataset.columns}")
             
         # Convert train and test datasets to csv files
         output_folder = "output"
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
             
+        print(f"Output folder: {output_folder}")
+            
         # Get fold file name
         fold_file_name = os.path.basename(fold_file)
-            
         train_dataset_path = os.path.join(output_folder, fold_file_name.replace(".json", "_train.csv"))
         test_dataset_path = os.path.join(output_folder, fold_file_name.replace(".json", "_test.csv"))
         
-        pd.concat(train_dataset).to_csv(train_dataset_path, index=False)
-        pd.concat(test_dataset).to_csv(test_dataset_path, index=False)
+        train_dataset.to_csv(train_dataset_path, index=False)
+        test_dataset.to_csv(test_dataset_path, index=False)
         
         print(f"Train dataset saved to: {train_dataset_path}")
         print(f"Test dataset saved to: {test_dataset_path}")
         
         ml_client = get_ml_client()
         
-        # Print all files in the current directory
-        print("Files in current directory:")
-        for file in os.listdir("."):
-            print(file)
-        
-        # Copy the sweep pipeline folders files to the current directory
-        sweep_pipeline_files = os.listdir(sweep_pipeline_path)
-        for file in sweep_pipeline_files:
-            print(f"Copying {file} to current directory")
-            shutil.copyfile(os.path.join(sweep_pipeline_path, file), file)
+        # Copy the sweep pipeline folder (and all its content) to the current directory
+        shutil.copytree(sweep_pipeline_path, ".", dirs_exist_ok=True)
             
         # Get current run ID
-        # current_run_id = mlflow.active_run().info.run_id
         from azureml.core import Run
         run = Run.get_context()
         current_run_id = run.id
@@ -175,62 +169,3 @@ def run(input_data):
         run.set_tags({"sweep_pipeline_job_id": submitted_job_id})
 
     return []
-    
-
-# def main():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--dataset_path", type=str, required=True)
-#     parser.add_argument("--folds_path", type=str, required=True)
-#     parser.add_argument("--output_path", type=str, required=True)
-#     args = parser.parse_args()
-
-#     # Load Workspace
-#     # ws = Workspace.from_config()
-
-#     # Load dataset and folds
-#     with open(args.folds_path, "r") as f:
-#         folds = json.load(f)
-    
-    
-#     # fold_index = int(os.environ.get("AZUREML_RUN_TOKEN"))  # Assuming a unique identifier for parallel task
-#     # train_idx, test_idx = folds[fold_index]
-
-#     # # Define Sweep Job for Hyperparameter Tuning
-#     # sweep_script = "./sweep_task.py"
-#     # environment = Environment.get(workspace=ws, name="AzureML-sklearn-1.0-ubuntu20.04-py38")
-#     # param_sampling = RandomParameterSampling({
-#     #     "n_estimators": choice(50, 100, 150),
-#     #     "max_depth": choice(10, 20, None)
-#     # })
-
-#     # sweep_config = HyperDriveConfig(
-#     #     run_config=ScriptRunConfig(
-#     #         source_directory="./scripts",
-#     #         script=sweep_script,
-#     #         arguments=[
-#     #             "--train_idx", train_idx,
-#     #             "--test_idx", test_idx,
-#     #             "--dataset_path", args.dataset_path
-#     #         ],
-#     #         environment=environment,
-#     #     ),
-#     #     hyperparameter_sampling=param_sampling,
-#     #     primary_metric_name="accuracy",
-#     #     primary_metric_goal=PrimaryMetricGoal.MAXIMIZE,
-#     #     max_total_trials=20,
-#     #     max_concurrent_trials=5
-#     # )
-
-#     # # Submit Sweep Job
-#     # sweep_run = ws.experiments["nested_cv_experiment"].submit(sweep_config)
-#     # sweep_run.wait_for_completion(show_output=True)
-
-#     # # Save Results
-#     # sweep_best_model = sweep_run.get_best_run_by_primary_metric()
-#     # with open(os.path.join(args.output_path, f"fold_{fold_index}_results.json"), "w") as f:
-#     #     f.write(sweep_best_model.get_metrics())
-    
-#     print("Outer Loop Task Completed!")
-
-# if __name__ == "__main__":
-#     main()

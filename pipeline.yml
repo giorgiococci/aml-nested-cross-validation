@@ -4,7 +4,8 @@ type: pipeline
 inputs:
   dataset_input:
     type: uri_file
-    path: azureml:iris-dataset@latest
+    #path: azureml:iris-dataset@latest
+    path: wasbs://datasets@azuremlexamples.blob.core.windows.net/iris.csv
   sweep_pipeline_path:
     type: uri_folder
     path: ./src/sweep-pipeline/

@@ -8,12 +8,18 @@ inputs:
   datasets_input:
     type: uri_folder
     path: ./output
+  
+outputs:
+  model_output:
+    type: mlflow_model
+  test_data:
+    type: uri_folder
 
 settings:
   default_compute: azureml:cpu-cluster
 
 jobs:
-  inner_task:
+  sweep_step:
     type: sweep
     trial: ./train.yml
     inputs:
@@ -29,6 +35,9 @@ jobs:
       decision_function_shape: "ovr"
       break_ties: False
       random_state: 42
+    outputs:
+      model_output:
+      test_data:
     sampling_algorithm: random
     search_space:
       c_value:
@@ -49,3 +58,12 @@ jobs:
       max_total_trials: 5
       max_concurrent_trials: 3
       timeout: 7200
+
+  predict_step:
+    type: command
+    inputs:
+      model: ${{parent.jobs.sweep_step.outputs.model_output}}
+      test_data: ${{parent.jobs.sweep_step.outputs.test_data}}
+    outputs:
+      predict_result:
+    component: ./predict.yml
