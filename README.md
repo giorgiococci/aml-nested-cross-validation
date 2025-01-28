@@ -2,18 +2,18 @@
 
 ```sh
 # Log in to Azure with a specific tenant
-az login --tenant 16b3c013-d300-468d-ac64-7eda0820b6d3
+az login
 
 # Set the subscription
-az account set --subscription 6e71006f-51e9-4cb5-a0d0-a2ada9895e67
+az account set --subscription <subscription-name>
 ```
 
 ```sh
 # Set the resource group
-az configure --defaults group=svision
+az configure --defaults group=<resource group>
 
 # Set the Azure Machine Learning workspace
-az configure --defaults workspace=gcsvisionml
+az configure --defaults workspace=<workspace name>
 ```
 
 ## Create AML environment
